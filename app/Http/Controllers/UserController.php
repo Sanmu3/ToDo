@@ -25,7 +25,7 @@ class UserController extends Controller
             $userData = [
                 'id'   => $user->id,
                 'name' => $user->name,
-                'dob'  => $user->dob->format('d-M-Y'),
+                'dob'  => $user->dob->format('d-F-Y'),
                 'gender' => $user->gender,
             ];
 
@@ -46,7 +46,7 @@ class UserController extends Controller
         $validator = Validator::make($request->all(), [
             'name'  => 'required|string',
             'dob'   => 'required|date',
-            'gender'    => 'required',
+            'gender'    => 'required|in:man,women',
         ]);
 
         if ($validator->fails()) {
@@ -59,7 +59,7 @@ class UserController extends Controller
             $responseData = [
                 'id'   => $createUser->id,
                 'name' => $createUser->name,
-                'dob'  => $createUser->dob->format('d-M-Y'),
+                'dob'  => $createUser->dob->format('d-F-Y'),
                 'gender' => $createUser->gender,
             ];
 
@@ -88,7 +88,7 @@ class UserController extends Controller
             $responseData = [
                 'id'   => $user->id,
                 'name' => $user->name,
-                'dob'  => $user->dob->format('d-M-Y'),
+                'dob'  => $user->dob->format('d-F-Y'),
                 'gender' => $user->gender,
             ];
 
