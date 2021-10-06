@@ -25,7 +25,7 @@ class UserController extends Controller
             $userData = [
                 'id'   => $user->id,
                 'name' => $user->name,
-                'dob'  => $user->dob->format('d-M-Y'),
+                'dob'  => $user->dob->format('d-F-Y'),
                 'gender' => $user->gender,
             ];
 
