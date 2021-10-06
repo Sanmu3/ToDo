@@ -19,20 +19,28 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::get(['id' ,'name', 'dob', 'gender']);
+        try {
+            $users = User::orderByDesc('id')->get(['id' ,'name', 'dob', 'gender']);
 
-        foreach ($users as $user) {
-            $userData = [
-                'id'   => $user->id,
-                'name' => $user->name,
-                'dob'  => $user->dob->format('d-F-Y'),
-                'gender' => $user->gender,
-            ];
+            foreach ($users as $user) {
+                $userData = [
+                    'id'   => $user->id,
+                    'name' => $user->name,
+                    'dob'  => $user->dob->format('d-F-Y'),
+                    'gender' => $user->gender,
+                ];
 
-            $responseData[] = $userData;
+                $responseData[] = $userData;
+            }
+
+            return Responses::success($responseData, 'Data Seluruh User');
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
         }
-
-        return Responses::success($responseData, 'List Users.');
     }
 
     /**
@@ -50,7 +58,7 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return Responses::error($validator->errors(), 'Error Validation');
+            return Responses::error($validator->errors(), 'Validasi error cek kembali, pastikan sesuai.', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
@@ -63,7 +71,7 @@ class UserController extends Controller
                 'gender' => $createUser->gender,
             ];
 
-            return Responses::success($responseData, 'Success Create User.', Response::HTTP_CREATED);
+            return Responses::success($responseData, 'Berhasil menambahkan data user', Response::HTTP_CREATED);
 
         } catch (Exception $e) {
             report($e);
@@ -111,7 +119,36 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|string',
+            'dob'   => 'required|date',
+            'gender'    => 'required|in:man,women',
+        ]);
+
+        if ($validator->fails()) {
+            return Responses::error($validator->errors(), 'Validasi error cek kembali, pastikan sesuai.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $user = User::findOrFail($id);
+
+            $user->update($validator->validated());
+
+            $responseData = [
+                'id'   => $user->id,
+                'name' => $user->name,
+                'dob'  => $user->dob->format('d-F-Y'),
+                'gender' => $user->gender,
+            ];
+
+            return Responses::success($responseData, 'Berhasil mengubah data user');
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
@@ -122,6 +159,18 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        //
+        try {
+            $user = User::findOrFail($id);
+
+            $user->delete();
+
+            return Responses::success(null, 'data '. $user->name .' berhasil di delete');
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 }
