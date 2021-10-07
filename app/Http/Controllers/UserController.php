@@ -22,18 +22,25 @@ class UserController extends Controller
         try {
             $users = User::orderByDesc('id')->get(['id' ,'name', 'dob', 'gender']);
 
-            foreach ($users as $user) {
-                $userData = [
-                    'id'   => $user->id,
-                    'name' => $user->name,
-                    'dob'  => $user->dob->format('d-F-Y'),
-                    'gender' => $user->gender,
-                ];
+            $responseData = [];
+            $message = "Data seluruh user";
 
-                $responseData[] = $userData;
+            if (count($users) == 0) {
+                $message = "Tidak ada data user";
+            } else {
+                foreach ($users as $user) {
+                    $userData = [
+                        'id'   => $user->id,
+                        'name' => $user->name,
+                        'dob'  => $user->dob->format('d-F-Y'),
+                        'gender' => $user->gender,
+                    ];
+
+                    $responseData[] = $userData;
+                }
             }
 
-            return Responses::success($responseData, 'Data Seluruh User');
+            return Responses::success($responseData, $message);
 
         } catch (Exception $e) {
             report($e);
@@ -100,7 +107,7 @@ class UserController extends Controller
                 'gender' => $user->gender,
             ];
 
-            return Responses::success($responseData, 'User Data');
+            return Responses::success($responseData, 'Data user '. $user->name);
 
         } catch (Exception $e) {
             report($e);

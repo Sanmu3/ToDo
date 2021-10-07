@@ -2,8 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Responses;
 use App\Rent;
+use App\User;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class RentController extends Controller
 {
@@ -14,17 +20,35 @@ class RentController extends Controller
      */
     public function index()
     {
-        //
-    }
+        try {
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+            $rents = Rent::orderByDesc('id')->with(['user:id,name', 'book:id,title'])->get(['id', 'user_id', 'book_id']);
+
+            $responseData = [];
+            $message = "Transaksi peminjaman buku";
+
+            if (count($rents) == 0) {
+                $message = "Tidak ada peminjaman buku";
+            } else {
+                foreach ($rents as $rent) {
+
+                    $rentData = [
+                        'id'   => $rent->id,
+                        'user' => $rent->user,
+                        'books' => $rent->book,
+                    ];
+
+                    $responseData[] = $rentData;
+                }
+            }
+
+            return Responses::success($responseData, $message);
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
@@ -35,51 +59,58 @@ class RentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'user_id'  => 'required',
+            'book_id'  => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return Responses::error($validator->errors(), 'Validasi error cek kembali, pastikan sesuai.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $createRent = Rent::create($validator->validated());
+
+            return Responses::success("Transaksi ID " . $createRent->id, 'Berhasil meminjam buku', Response::HTTP_CREATED);
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Rent  $rent
+     * @param  int $userId
      * @return \Illuminate\Http\Response
      */
-    public function show(Rent $rent)
+    public function show($userId)
     {
-        //
-    }
+        try {
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Rent  $rent
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Rent $rent)
-    {
-        //
-    }
+            $userRent = User::where('id', $userId)->with(['book:id,title'])->firstOrFail();
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Rent  $rent
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Rent $rent)
-    {
-        //
-    }
+            foreach ($userRent->book as $book) {
+                $books[] = [
+                    'id'    => $book->id,
+                    'title' => $book->title,
+                ];
+            }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Rent  $rent
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Rent $rent)
-    {
-        //
+            $responseData = [
+                'id'   => $userRent->id,
+                'name' => $userRent->name,
+                'books' => $books,
+            ];
+
+            return Responses::success($responseData, 'Data buku yang dipinjam oleh ' . $userRent->name);
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 }

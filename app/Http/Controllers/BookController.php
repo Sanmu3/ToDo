@@ -3,7 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Book;
+use App\Helpers\Responses;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class BookController extends Controller
 {
@@ -14,17 +19,34 @@ class BookController extends Controller
      */
     public function index()
     {
-        //
-    }
+        try {
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
+            $books = Book::orderByDesc('id')->get(['id' ,'title']);
+
+            $responseData = [];
+            $message = "Data seluruh buku";
+
+            if (count($books) == 0) {
+                $message = "Tidak ada data buku";
+            } else {
+                foreach ($books as $book) {
+                    $bookData = [
+                        'id'   => $book->id,
+                        'title' => $book->title,
+                    ];
+
+                    $responseData[] = $bookData;
+                }
+            }
+
+            return Responses::success($responseData, $message);
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
@@ -35,51 +57,120 @@ class BookController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        $validator = Validator::make($request->all(), [
+            'title'  => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return Responses::error($validator->errors(), 'Validasi error cek kembali, pastikan sesuai.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+            $createBook = Book::create($validator->validated());
+
+            $responseData = [
+                'id'   => $createBook->id,
+                'title' => $createBook->title,
+            ];
+
+            return Responses::success($responseData, 'Berhasil menambahkan data buku', Response::HTTP_CREATED);
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  \App\Book  $book
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Book $book)
+    public function show($id)
     {
-        //
+        try {
+
+            $book = Book::findOrFail($id);
+
+            $responseData = [
+                'id'   => $book->id,
+                'title' => $book->title,
+            ];
+
+            return Responses::success($responseData, 'Data buku '. $book->title);
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Book  $book
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Book $book)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Book  $book
+     * @param  int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Book $book)
+    public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'title'  => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return Responses::error($validator->errors(), 'Validasi error cek kembali, pastikan sesuai.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        try {
+
+            $book = Book::findOrFail($id);
+
+            $book->update($validator->validated());
+
+            $responseData = [
+                'id'   => $book->id,
+                'title' => $book->title,
+            ];
+
+            return Responses::success($responseData, 'Berhasil mengubah data buku');
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Book  $book
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Book $book)
+    public function destroy($id)
     {
-        //
+        try {
+
+            $book = Book::findOrFail($id);
+
+            $book->delete();
+
+            return Responses::success(null, 'buku '. $book->title .' berhasil di delete');
+
+        } catch (Exception $e) {
+            report($e);
+            Log::error($e->getMessage());
+
+            return Responses::error(null, $e->getMessage());
+        }
     }
 }
