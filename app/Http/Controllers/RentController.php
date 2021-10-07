@@ -90,7 +90,7 @@ class RentController extends Controller
     {
         try {
 
-            $userRent = User::where('id', $userId)->with(['book:id,title'])->firstOrFail();
+            $userRent = User::where('id', $userId)->with(['book'])->firstOrFail();
 
             foreach ($userRent->book as $book) {
                 $books[] = [
