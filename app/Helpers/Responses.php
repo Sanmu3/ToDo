@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Helpers;
+
+use Illuminate\Http\Response;
+
 /**
 *
 * API Response
@@ -32,7 +35,7 @@ class Responses {
     *
     */
 
-    public static function success($data = null, $message = null, $code = 200,$status = "success")
+    public static function success($data = null, $message = null, $code = Response::HTTP_OK, $status = "success")
     {
         self::$responses['meta']['code'] = $code;
         self::$responses['meta']['status'] = $status;
@@ -48,7 +51,7 @@ class Responses {
     *
     */
 
-    public static function error($data = null, $message = null, $code = 500, $status = "error")
+    public static function error($data = null, $message = null, $code = Response::HTTP_INTERNAL_SERVER_ERROR, $status = "error")
     {
         self::$responses['meta']['code'] = $code;
         self::$responses['meta']['status'] = $status;
