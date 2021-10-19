@@ -1,1 +1,1 @@
-saya meminta untuk di acc
+BODOH SIA SI DENI
